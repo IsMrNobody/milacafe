@@ -52,7 +52,10 @@
       <!-- <v-spacer /> -->
       <div class="logoBar">
         <!-- <v-img src="https://res.cloudinary.com/dku13l2ep/image/upload/v1674699887/DaniPotter/Magia_Legal_bea1g7.png"></v-img> -->
-        <h1 class="tercero--text">{{ merchant.name }}</h1>
+        <nuxt-link to="/combos" class="style">
+          <h1 class="tercero--text">{{ merchant.name }}</h1>
+        </nuxt-link>
+        <!-- <h1 class="tercero--text">{{ merchant.name }}</h1> -->
       </div>
       <!-- <v-toolbar-title v-text="title" /> -->
       <v-spacer />

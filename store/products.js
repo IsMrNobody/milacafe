@@ -19,32 +19,59 @@ export const mutations = {
     state.filterByCat = state.filterProducts.filter(pro => pro.category === id)
   },
   setCateg( state, data ) {
-    state.categories = data
+    state.categories = Array.from(data)
   }
 }
 
 export const actions = {
   async setProducts({ commit, dispatch }) {
-    const data = await productos()
-    commit('setProducts', data)
-    dispatch('setCategories')
+    try {
+      const data = await productos()
+      if (Array.isArray(data)) {
+        commit('setProducts', data)
+        dispatch('setCategories')
+      } else {
+        console.error('Error: productos() did not return an array', data)
+        commit('setProducts', [])
+        commit('setCateg', [])
+        commit('setByCat', [])
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error)
+      commit('setProducts', [])
+      commit('setCateg', [])
+      commit('setByCat', [])
+    }
   },
-  setCategories({ state, commit  }) {
-    const products = state.products
+  setCategories({ state, commit }) {
+    try {
+      const products = state.products
+      if (!Array.isArray(products)) {
+        console.error('Products is not an array')
+        commit('setCateg', [])
+        return
+      }
 
-    const categories = []
+      const categories = new Set()
+      
+      products.forEach(product => {
+        if (product && product.category) {
+          categories.add(product.category)
+        }
+      })
 
-    products.forEach(cat => {
-      const category = cat.category
-      categories.push(category)
-    })
-    
-    const cate = new Set(categories)
-    commit('setCateg', cate)
-    const mapFilter = cate.map(cat => {
-      const filter = products.filter(pro => pro.category === cat)
-      return {filter, category: cat}
-    })
-    commit('setByCat', mapFilter)
+      commit('setCateg', categories)
+
+      const mapFilter = Array.from(categories).map(category => {
+        const filter = products.filter(product => product.category === category)
+        return { filter, category }
+      })
+
+      commit('setByCat', mapFilter)
+    } catch (error) {
+      console.error('Error setting categories:', error)
+      commit('setCateg', [])
+      commit('setByCat', [])
+    }
   }
 }

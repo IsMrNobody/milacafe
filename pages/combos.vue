@@ -1,161 +1,254 @@
 <template>
   <v-container>
-    <!-- Search Component -->
-    <!-- <search-products @search="handleSearch" /> -->
-
-    <!-- Main Product Display -->
-    <v-card class="mb-6 pa-4 transparent" elevation="2">
-      <v-row>
-        <v-col cols="12" md="6" class="d-flex justify-center align-center">
-          <v-img
-            :src="selectedProduct.image"
-            max-width="400"
-            contain
-            class="rounded-lg"
-          ></v-img>
-        </v-col>
-
-        <v-col cols="12" md="6">
-          <search-products @search="handleSearch" />
-          <div class="text-h4 font-weight-bold mb-2">{{ selectedProduct.name }}</div>
-          <div class="text-subtitle-1 mb-4">{{ selectedProduct.description }}</div>
-          <div class="text-h5 secondary--text mb-4">${{ selectedProduct.price }}</div>
-          <v-btn color="white" outlined elevation="2" @click="addToCart()">
-            Ordenar Ahora
-          </v-btn>
-        </v-col>
-      </v-row>
-      <v-row> 
-        <v-card class="pa-4 transparent">
-          <v-slide-group
-            show-arrows
-            class="pa-4"
+    <!-- Categorías y Búsqueda -->
+    <v-row class="mb-4" align="center">
+      <v-col cols="12" md="8">
+        <v-chip-group
+          v-model="selectedCategory"
+          mandatory
+          @change="filterByCategory"
+          show-arrows
+        >
+          <v-chip
+            v-for="category in categoriesList"
+            :key="category"
+            :value="category"
+            color="secondary"
+            outlined
+            class="ma-2"
           >
-            <v-slide-item
+            {{ category }}
+          </v-chip>
+        </v-chip-group>
+      </v-col>
+      <!-- <v-col cols="12" md="4">
+        <search-products @search="handleSearch" />
+      </v-col> -->
+    </v-row>
+
+    <!-- Contenido Principal -->
+    <v-row>
+      <!-- Lista de Productos -->
+      <v-col cols="12" md="5" lg="4">
+        <v-card
+          class="transparent"
+          elevation="0"
+          height="calc(100vh - 300px)"
+          style="overflow-y: auto"
+        >
+          <div class="d-flex flex-column pa-2">
+            <v-card
               v-for="(product, index) in filteredProducts"
               :key="index"
-              v-slot="{ active }"
+              class="mb-3"
+              :class="{ 'on-hover': selectedProduct?.id === product.id }"
+              @click="selectProduct(product)"
+              elevation="2"
             >
-              <v-card
-                class="ma-4"
-                width="200"
-                :class="{ 'on-hover': active }"
-                @click="selectProduct(product)"
-                >
-                <v-card-title class="text-subtitle-1">
-                  {{ product.name }}
-                </v-card-title>
-                <v-card-subtitle>
-                  ${{ product.price }}
-                </v-card-subtitle>
-                <v-img
-                  :src="product.image"
-                  height="150"
-                  cover
-                ></v-img>
-              </v-card>
-            </v-slide-item>
-          </v-slide-group>
+              <v-row no-gutters>
+                <v-col cols="4">
+                  <v-img
+                    :src="product.img?.url || product.image"
+                    height="100"
+                    cover
+                  ></v-img>
+                </v-col>
+                <v-col cols="8" class="pa-3">
+                  <div
+                    class="text-subtitle-2 font-weight-bold mb-1 text-truncate"
+                  >
+                    {{ product.name }}
+                  </div>
+                  <div class="text-caption mb-1 text-truncate-2">
+                    {{ product.description }}
+                  </div>
+                  <!-- <div class="text-subtitle-2 secondary--text">
+                    ${{ product.price }}
+                  </div> -->
+                </v-col>
+              </v-row>
+            </v-card>
+          </div>
         </v-card>
-      </v-row>
-    </v-card>
+      </v-col>
+
+      <!-- Main Product Display -->
+      <v-col cols="12" md="7" lg="8">
+        <v-card v-if="selectedProduct" class="pa-4 transparent">
+          <v-row>
+            <v-col cols="12" lg="6" class="d-flex justify-center align-center">
+              <v-img
+                :src="productImage"
+                width="400"
+                height="400"
+                class="rounded-lg"
+              ></v-img>
+            </v-col>
+
+            <v-col cols="12" lg="6">
+              <div class="text-h4 font-weight-bold mb-2">
+                {{ selectedProduct.name }}
+              </div>
+              <div class="text-subtitle-1 mb-4">
+                {{ selectedProduct.description }}
+              </div>
+
+              <!-- Porciones -->
+              <div v-if="selectedProduct.portion" class="mb-4">
+                <div class="text-subtitle-1 mb-2">Porciones:</div>
+                <v-chip-group
+                  v-model="selectedPortion"
+                  active-class="secondary white--text"
+                  column
+                >
+                  <v-chip
+                    v-for="(portion, i) in selectedProduct.portion"
+                    :key="i"
+                    @click="selectPortion(i)"
+                  >
+                    {{ portion.title }}
+                  </v-chip>
+                </v-chip-group>
+                <div v-if="portionInfo" class="text-caption grey--text mt-1">
+                  {{ portionInfo.description }}
+                </div>
+              </div>
+
+              <!-- Ingredientes -->
+              <div v-if="selectedProduct.ingredients" class="mb-4">
+                <div class="text-subtitle-1 mb-1">Ingredientes:</div>
+                <div class="text-caption grey--text">
+                  {{ selectedProduct.ingredients }}
+                </div>
+              </div>
+
+              <div class="text-h5 secondary--text mb-4">${{ totalPrice }}</div>
+              <v-btn color="white" outlined elevation="2" @click="addToCart()">
+                Ordenar Ahora
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script>
-import SearchProducts from '../components/SearchProducts.vue'
+import { mapState } from 'vuex'
+// import SearchProducts from '../components/SearchProducts.vue'
 
 export default {
   name: 'CombosPage',
   components: {
-    SearchProducts
+    // SearchProducts,
   },
   layout: 'store',
   data() {
     return {
       selectedProduct: null,
       searchTerm: '',
-      products: [
-    {
-      day: "Lunes",
-      name: "Desayuno Americano",
-      description: "Deliciosas panquecas acompañadas de syrop de maple huevo revuelto y tocineta crujiente con una bebida y de postre una galleta",
-      price: 5.99,
-      availability: "7:30am to 11:30am",
-      image: 'https://cdn0.recetasgratis.net/es/posts/0/9/1/panquecas_34190_600_square.jpg'
-    },
-    {
-      day: "Martes",
-      name: "Sandwich clásico",
-      description: "Con tres capas de pan, jamón y queso, lechuga y tomate más salsas básicas con una bebida y de postre una galleta",
-      price: 4.50,
-      availability: "7:30am to 11:30am",
-      image: 'https://www.cocinadelirante.com/800x600/filters:format(webp):quality(75)/sites/default/files/images/2018/04/club-sandwich.jpg'
-    },
-    {
-      day:"Miércoles",
-      name:"Tortilla de huevo",
-      description:"Con una corteza crujiente de queso mozzarella, rellena de aguacate y tomate coronada con cebollín acompañado de una infusión de jamaica",
-      price:4,
-      availability:"7:30am to 11:30am",
-      image: 'https://res.cloudinary.com/dku13l2ep/image/upload/v1722271728/JARTATE/Ciudad/maracay/milacafe/logo/color-white_lbbdjw.png'
-    },
-    {
-      day: "Jueves",
-      name: "2 empanadas",
-      description: "2 empanadas de tu preferencia más un papelon con limón",
-      price: 3,
-      availability:"7:30am to 11:30am",
-      image: 'https://res.cloudinary.com/dku13l2ep/image/upload/v1722271728/JARTATE/Ciudad/maracay/milacafe/logo/color-white_lbbdjw.png'
-    },
-    {
-      day: "Viernes",
-      name: "Hamburguesa Cheeseburger",
-      description:"Una hamburguesa cheeseburger con 100gr de papas fritas más un refresco",
-      price:4.99,
-      availability: "12:00pm to 6:00pm",
-      image: 'https://res.cloudinary.com/dku13l2ep/image/upload/v1722271728/JARTATE/Ciudad/maracay/milacafe/logo/color-white_lbbdjw.png'
-    },
-    {
-        day:"Sábado",
-        name:"Combo Familiar",
-        description:"1 cheeseburger, 1 bacon cheeseburger, 1 Oklahoma Burger, 1 americana Burger, 1 Mila Burger + 300gr de papas fritas + 1 Cocacola de 2lt",
-        price:29.99,
-        availability:"12:00pm to 6:00pm",
-        image: 'https://res.cloudinary.com/dku13l2ep/image/upload/v1722271728/JARTATE/Ciudad/maracay/milacafe/logo/color-white_lbbdjw.png'
-    },
-      {
-        day:"Sábado",
-        name:"Combo Premium",
-        description:"3 Bacon cheeseburger + refresco 2 lt",
-        price:17.99,
-        availability:"12:00pm to 6:00pm",
-        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQV8QN69Uvuy76oXnHBHZkuvl2Gv_IfUTedAQ&sy'
-    },
-      {
-       day:"Sábado",
-        name:"Combo Parejas",
-        description:"2 doble cheeseburger + Cocacola de 1,5lt + galleta",
-        price:15.99,
-        availability:"12:00pm to 6:00pm",
-        image: 'https://res.cloudinary.com/dku13l2ep/image/upload/v1722271728/JARTATE/Ciudad/maracay/milacafe/logo/color-white_lbbdjw.png'
-    }
-  ]
+      selectedCategory: null,
+      isLoading: true,
+      selectedPortion: 0,
+      portionInfo: null,
+      totalPrice: 0,
     }
   },
   computed: {
+    ...mapState({
+      storeProducts: (state) => state.products.filterByCat || [],
+      rawCategories: (state) => state.products.categories || [],
+    }),
+    categoriesList() {
+      const categories = Array.isArray(this.rawCategories)
+        ? this.rawCategories
+        : Array.from(this.rawCategories || [])
+      return categories.filter(Boolean)
+    },
+    productImage() {
+      if (!this.selectedProduct) return ''
+      return this.selectedProduct.img?.url || this.selectedProduct.image || ''
+    },
     filteredProducts() {
-      if (!this.searchTerm) return this.products
-      
-      return this.products.filter(product => {
-        return product.name.toLowerCase().includes(this.searchTerm) ||
-               product.description.toLowerCase().includes(this.searchTerm)
-      })
-    }
+      if (!this.storeProducts || !this.storeProducts.length) return []
+
+      // Si hay término de búsqueda, buscar en todas las categorías
+      if (this.searchTerm) {
+        const searchTermLower = this.searchTerm.toLowerCase()
+        const allProducts = this.storeProducts.flatMap(
+          (cat) => cat.filter || []
+        )
+
+        const searchResults = allProducts.filter((product) => {
+          if (!product.name || !product.description) return false
+          return (
+            product.name.toLowerCase().includes(searchTermLower) ||
+            product.description.toLowerCase().includes(searchTermLower)
+          )
+        })
+
+        // Si hay una categoría seleccionada, filtrar los resultados por esa categoría
+        if (this.selectedCategory) {
+          return searchResults.filter(
+            (product) => product.category === this.selectedCategory
+          )
+        }
+
+        return searchResults
+      }
+
+      // Si no hay término de búsqueda, mostrar productos de la categoría seleccionada
+      if (!this.selectedCategory) return []
+      const categoryProducts = this.storeProducts.find(
+        (cat) => cat.category === this.selectedCategory
+      )
+      return categoryProducts?.filter || []
+    },
   },
-  created() {
-    // Set the first product as selected by default
-    this.selectedProduct = this.products[0]
+  watch: {
+    categoriesList: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal && newVal.length > 0 && !this.selectedCategory) {
+          this.selectedCategory = newVal[0]
+        }
+      },
+    },
+    selectedCategory: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal && this.filteredProducts.length > 0) {
+          this.selectedProduct = this.filteredProducts[0]
+        }
+      },
+    },
+    selectedProduct: {
+      immediate: true,
+      handler(newProduct) {
+        if (newProduct) {
+          this.selectedPortion = 0
+          this.selectPortion(0)
+        }
+      },
+    },
+  },
+  async created() {
+    try {
+      this.isLoading = true
+      await this.$store.dispatch('products/setProducts')
+
+      if (this.categoriesList.length > 0) {
+        this.selectedCategory = this.categoriesList[0]
+        if (this.filteredProducts.length > 0) {
+          this.selectedProduct = this.filteredProducts[0]
+        }
+      }
+    } catch (error) {
+      console.error('Error loading products:', error)
+    } finally {
+      this.isLoading = false
+    }
   },
   methods: {
     selectProduct(product) {
@@ -163,35 +256,73 @@ export default {
     },
     handleSearch(query) {
       this.searchTerm = query
-      // If there are filtered results and current selection is not in filtered results,
-      // update the selected product
-      if (this.filteredProducts.length > 0 && 
-          !this.filteredProducts.includes(this.selectedProduct)) {
+      // Si hay resultados de búsqueda, seleccionar el primero
+      if (this.filteredProducts.length > 0) {
         this.selectedProduct = this.filteredProducts[0]
+      } else if (
+        this.selectedProduct &&
+        this.selectedProduct.category !== this.selectedCategory
+      ) {
+        // Si no hay resultados, mantener la selección actual solo si coincide con la categoría actual
+        this.selectedProduct = null
       }
     },
+    filterByCategory(category) {
+      this.searchTerm = ''
+      const categoryProducts =
+        this.storeProducts.find((cat) => cat.category === category)?.filter ||
+        []
+      if (categoryProducts.length > 0) {
+        this.selectedProduct = categoryProducts[0]
+      }
+    },
+    selectPortion(index) {
+      if (!this.selectedProduct?.portion) return
+
+      const portion = this.selectedProduct.portion[index]
+      this.portionInfo = portion
+      const productPrice = this.selectedProduct.price
+      this.totalPrice = productPrice + (portion?.price || 0)
+    },
     addToCart() {
+      if (!this.selectedProduct) return
+
       const data = {
-          ...this.selectedProduct,
-          totalProducto: this.selectedProduct.price,
-          selectedPortion: {},
-          cantidad: 1,
-          img: {
-            url: this.selectedProduct.image
-          }
-        }
-        try  {
-          this.$store.dispatch('carrito/addToCar', data)
-        } catch (error) {
-          console.log('aqui error', error)
-        }
-    }
-  }
+        ...this.selectedProduct,
+        price: this.totalPrice,
+        totalProducto: this.totalPrice,
+        selectedPortion: this.portionInfo || {},
+        cantidad: 1,
+        img: {
+          url: this.productImage,
+        },
+      }
+      try {
+        this.$store.dispatch('carrito/addToCar', data)
+      } catch (error) {
+        console.log('aqui error', error)
+      }
+    },
+  },
 }
 </script>
 
 <style scoped>
 .on-hover {
   opacity: 0.8;
+  border: 2px solid var(--v-secondary-base) !important;
+}
+
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
