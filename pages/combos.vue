@@ -236,6 +236,7 @@ export default {
   async created() {
     try {
       this.isLoading = true
+      this.$store.dispatch('setMerchant')
       await this.$store.dispatch('products/setProducts')
 
       if (this.categoriesList.length > 0) {
