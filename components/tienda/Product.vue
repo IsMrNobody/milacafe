@@ -1,15 +1,15 @@
- <template>
+<template>
   <v-row>
     <v-col
       v-for="(p, i) in pro"
       :key="i"
+      v-show="p.active === true"
       sm="5"
       md="4"
       lg="3"
       cols="6"
-
-    > 
-      <v-hover v-slot="{ }">
+    >
+      <v-hover v-slot="{}">
         <v-card
           class="sombra"
           color="secondary"
@@ -17,10 +17,7 @@
           max-width="600"
           height="280"
         >
-          <v-img
-            height="155"
-            :src="p.img.url"
-          >
+          <v-img height="155" :src="p.img.url">
             <!-- <v-expand-transition>
               <div
                 v-if="hover"
@@ -31,10 +28,7 @@
               </div>
             </v-expand-transition> -->
           </v-img>
-          <v-card-text
-            class="pt-5"
-            style="position: relative;"
-          >
+          <v-card-text class="pt-5" style="position: relative">
             <ProductDialog :producto="p" />
             <h4 class="tercero--text text-h5 mb-2 mt-12 text-truncate">
               {{ p.name }}
@@ -48,23 +42,23 @@
           </v-card-text>
         </v-card>
       </v-hover>
-    </v-col> 
+    </v-col>
   </v-row>
 </template>
 
 <script>
 import ProductDialog from '@/components/tienda/ProductDialog'
-  export default {
-    components: {
-      ProductDialog
+export default {
+  components: {
+    ProductDialog,
+  },
+  props: {
+    pro: {
+      type: Array,
+      default: () => {},
     },
-    props: {
-      pro: {
-       type: Array,
-       default: () => {}
-      }
-    }
-  }
+  },
+}
 </script>
 
 <style>
@@ -72,7 +66,7 @@ import ProductDialog from '@/components/tienda/ProductDialog'
   align-items: center;
   bottom: 0;
   justify-content: center;
-  opacity: .5;
+  opacity: 0.5;
   position: absolute;
   width: 100%;
 }
